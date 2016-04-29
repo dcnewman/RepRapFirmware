@@ -4,3 +4,6 @@ Release/*
 !Release/RepRapFirmware*.bin
 *~
 *orig
+build/*
+*.pyc
+.scons*
