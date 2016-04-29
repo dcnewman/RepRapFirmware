@@ -413,6 +413,8 @@ void Platform::InitZProbe()
 
 #ifdef DUET_NG
 	zProbeModulationPin = Z_PROBE_MOD_PIN;
+#elif __RADDS__
+	zProbeModulationPin = Z_PROBE_MOD_PIN;
 #else
 	zProbeModulationPin = (board == BoardType::Duet_07 || board == BoardType::Duet_085) ? Z_PROBE_MOD_PIN07 : Z_PROBE_MOD_PIN;
 #endif
@@ -1707,6 +1709,7 @@ void Platform::UpdateMotorCurrent(size_t drive)
 			}
 			else
 			{
+#ifndef __RADDS__
 #ifndef DUET_NG
 				if (board == BoardType::Duet_085)
 				{
@@ -1734,6 +1737,7 @@ void Platform::UpdateMotorCurrent(size_t drive)
 					mcpExpansion.setNonVolatileWiper(potWipes[driver], pot);
 					mcpExpansion.setVolatileWiper(potWipes[driver], pot);
 				}
+#endif
 #endif
 			}
 #ifdef EXTERNAL_DRIVERS
@@ -1880,8 +1884,10 @@ void Platform::InitFans()
 		fans[i].Init(COOLING_FAN_PINS[i],
 				!HEAT_ON
 #ifndef DUET_NG
+#ifndef __RADDS__
 					// The cooling fan 0 output pin gets inverted if HEAT_ON == 0 on a Duet 0.4, 0.6 or 0.7
 					&& (board == BoardType::Duet_06 || board == BoardType::Duet_07)
+#endif
 #endif
 				);
 	}
@@ -2350,6 +2356,8 @@ void Platform::SetBoardType(BoardType bt)
 	{
 #ifdef DUET_NG
 		board = BoardType::DuetNG_08;
+#elif __RADDS__
+		board = BoardType::RADDS_15;
 #else
 		// Determine whether this is a Duet 0.6 or a Duet 0.8.5 board.
 		// If it is a 0.85 board then DAC0 (AKA digital pin 67) is connected to ground via a diode and a 2.15K resistor.
@@ -2379,6 +2387,8 @@ const char* Platform::GetElectronicsString() const
 	{
 #ifdef DUET_NG
 	case BoardType::DuetNG_08:				return "DuetNG 0.6";
+#elif __RADDS__
+	case BoardType::RADDS_15:				return "RADDS 1.5";
 #else
 	case BoardType::Duet_06:				return "Duet 0.6";
 	case BoardType::Duet_07:				return "Duet 0.7";

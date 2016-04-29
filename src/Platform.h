@@ -178,6 +178,8 @@ enum class BoardType : uint8_t
 	Auto = 0,
 #ifdef DUET_NG
 	DuetNG_08 = 1
+#elif __RADDS__
+	RADDS_15 = 1
 #else
 	Duet_06 = 1,
 	Duet_07 = 2,
