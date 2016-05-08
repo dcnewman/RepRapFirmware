@@ -518,6 +518,8 @@ public:
 	float Acceleration(size_t drive) const;
 	const float* Accelerations() const;
 	void SetAcceleration(size_t drive, float value);
+	const float GetMaxAverageAcceleration() const { return maxAverageAcceleration; }
+	void SetMaxAverageAcceleration(float f) { maxAverageAcceleration = f; }
 	float MaxFeedrate(size_t drive) const;
 	const float* MaxFeedrates() const;
 	void SetMaxFeedrate(size_t drive, float value);
@@ -725,6 +727,7 @@ private:
 	float motorCurrents[DRIVES];
 	float idleCurrentFactor;
 	size_t slowestDrive;
+	float maxAverageAcceleration;
 
 	// Digipots
 
