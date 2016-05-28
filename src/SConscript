@@ -28,6 +28,8 @@ elif platform == 'ng':
   platform_dir      = 'duetNG'
   variant_name      = 'duetNG'
   coreng_libdir     = 'SAM4E8E'
+  flags.append('-DCORE_NG')
+  flags.append('-DDUET_NG')
 elif platform == 'radds':
   arch              = 'sam3x8e'
   platform_dir      = 'RADDS'
@@ -38,10 +40,8 @@ else:
 
 if arch == 'sam3x8e':
   mcpu = 'cortex-m3'
-  fcpu = '84000000'
 elif arch == 'sam4e8e':
   mcpu = 'cortex-m4'
-  fcpu = '120000000'
 
 target_name = 'RepRapFirmware-' + platform
 hex_name = target_name + '.bin'
@@ -180,8 +180,6 @@ env.Replace(CCFLAGS=[
     '-mcpu=' + mcpu,
     '-Dprintf=iprintf',
     '-D__' + arch.upper() + '__',
-    '-DF_CPU=' + fcpu + 'L',
-    '-DCORE_NG',
     '-DPLATFORM=' + platform_dir,
     '-DDATE=\'"' + datetime.now().strftime('%y/%m/%d') + '"\'' ])
 

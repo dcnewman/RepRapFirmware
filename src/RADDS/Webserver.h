@@ -18,7 +18,7 @@ public:
 	void Init() const { };
 	void Spin() const { };
 	void Exit() const { };
-	void Diagnostics() const { };
+	void Diagnostics(MessageType mtype) const { };
 
 	bool GCodeAvailable(const WebSource source) const { return false; }
 	char ReadGCode(const WebSource source) const { return '\0'; }
@@ -28,8 +28,6 @@ public:
 	void HandleGCodeReply(const WebSource source, OutputBuffer *reply) const;
 	void HandleGCodeReply(const WebSource source, const char *reply) const { };
 };
-
-//inline Webserver::Webserver(Platform* p, Network* n) { return; }
 
 inline void Webserver::HandleGCodeReply(const WebSource source, OutputBuffer *reply) const
 {

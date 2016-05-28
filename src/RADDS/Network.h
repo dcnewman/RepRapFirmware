@@ -21,7 +21,7 @@ public:
 	void Exit() const { }
 	void Spin() const { };
 	void Interrupt() const { };
-	void Diagnostics() const { };
+	void Diagnostics(MessageType mtype) const { };
 
 	boolean IsEnabled() const { return false; }
 	boolean InLwip() const { return false; }
