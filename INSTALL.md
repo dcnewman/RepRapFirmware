@@ -1,3 +1,7 @@
+*This document details how to build the RepRapFirmware using scons.*
+*For documentation on installing and configuring the RepRapFirmware*
+*on an RADDS v1.5 board, see the file `doc/RADDS-v1.5.md`*
+
 Traditionally, the Duet RepRapFirmware is built using the Eclipse
 IDE.  If that is to your liking, then by all means go ahead and
 do so.  However, This fork of the RepRapFirmware may also be built
