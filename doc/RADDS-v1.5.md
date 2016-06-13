@@ -29,7 +29,6 @@ executable within it.
    port then you will need to press the Due's ERASE button, then the RESET
    button, and then issue the above `bossac` command but with `-U true`
    instead of `-U false`.
-   
 
 SD Card Files
 -------------
@@ -187,7 +186,11 @@ USB
 Use the Due's USB programming port for uploading firmware.  This is the USB port
 closest to the Due board's power jack.  Use the Due's native USB port for
 communication with the RepRapFirmware when it is running.  The native USB port
-is configured to communicate at 115200 Baud.  
+is configured to communicate at 115200 Baud.
+
+**Windows only**: you will need to install the driver files from the `Driver/`
+folder of this repository in order to communicate with the RepRapFirmware
+over USB.
 
 
 PanelDue
