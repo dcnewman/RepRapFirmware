@@ -79,12 +79,7 @@ platforms = {
           'defines' : [ '__RADDS__', 'SD_MMC_SPI_MODE', 'SPI_PIN=77',
                         'SPI_CHAN=0', 'SD_SS=4', 'SD_DETECT_PIN=14',
                         'SD_DETECT_VAL=0', 'SD_DETECT_PIO_ID=ID_PIOD',
-                        'USE_SAM3X_DMAC=1', # 'USE_USB_COMBO',
-                        'USB_DEVICE_VENDOR_ID=0x2341',
-                        'USB_DEVICE_PRODUCT_ID=0x003e',
-                        'USB_DEVICE_PRODUCT_NAME=\\"Arduino Due\\"',
-                        'USB_DEVICE_MANUFACTURE_NAME=\\"Arduino S.r.l.\\"',
-                        'DMA_TIMEOUT_COMPUTE' ]
+                        'USE_SAM3X_DMAC=1', 'DMA_TIMEOUT_COMPUTE' ]
         }
 }
 
