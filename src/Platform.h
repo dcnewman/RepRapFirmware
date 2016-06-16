@@ -188,9 +188,13 @@ enum class BoardType : uint8_t
 	DuetNG_10 = 1
 # endif
 #else
+# ifdef __RADDS__
+	RADDS_15 = 1
+# else
 	Duet_06 = 1,
 	Duet_07 = 2,
 	Duet_085 = 3
+# endif
 #endif
 };
 

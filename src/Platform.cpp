@@ -430,7 +430,7 @@ void Platform::InitZProbe()
 	zProbeOnFilter.Init(0);
 	zProbeOffFilter.Init(0);
 
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(__RADDS__)
 	zProbeModulationPin = Z_PROBE_MOD_PIN;
 #else
 	zProbeModulationPin = (board == BoardType::Duet_07 || board == BoardType::Duet_085) ? Z_PROBE_MOD_PIN07 : Z_PROBE_MOD_PIN;
@@ -1794,33 +1794,35 @@ void Platform::UpdateMotorCurrent(size_t drive)
 			}
 			else
 			{
-# ifndef DUET_NG
+# ifndef __RADDS__
+#  ifndef DUET_NG
 				if (board == BoardType::Duet_085)
 				{
-# endif
+#  endif
 					// Extruder 0 is on DAC channel 0
 					if (driver == 4)
 					{
 						float dacVoltage = max<float>(current * 0.008*senseResistor + stepperDacVoltageOffset, 0.0);	// the voltage we want from the DAC relative to its minimum
 						uint32_t dac = (uint32_t)((256 * dacVoltage + 0.5 * stepperDacVoltageRange)/stepperDacVoltageRange);
-# ifdef DUET_NG
+#  ifdef DUET_NG
 						AnalogWrite(DAC1, dac);
-# else
+#  else
 						AnalogWrite(DAC0, dac);
-# endif
+#  endif
 					}
 					else
 					{
 						mcpExpansion.setNonVolatileWiper(potWipes[driver-1], pot);
 						mcpExpansion.setVolatileWiper(potWipes[driver-1], pot);
 					}
-# ifndef DUET_NG
+#  ifndef DUET_NG
 				}
 				else if (driver < 8)		// on a Duet 0.6 we have a maximum of 8 drives
 				{
 					mcpExpansion.setNonVolatileWiper(potWipes[driver], pot);
 					mcpExpansion.setVolatileWiper(potWipes[driver], pot);
 				}
+#  endif
 # endif
 			}
 # ifdef EXTERNAL_DRIVERS
@@ -1987,7 +1989,7 @@ void Platform::InitFans()
 	for (size_t i = 0; i < NUM_FANS; ++i)
 	{
 		fans[i].Init(COOLING_FAN_PINS[i],
-#ifdef DUET_NG
+#if defined(DUET_NG) || defined(__RADDS__)
 				false
 #else
 				// The cooling fan output pin gets inverted if HEAT_ON == 0 on a Duet 0.6 or 0.7
@@ -2466,6 +2468,9 @@ void Platform::SetBoardType(BoardType bt)
 		board = BoardType::DuetNG_10;
 # endif
 #else
+# ifdef __RADDS__
+		board = BoardType::RADDS_15;
+# else
 		// Determine whether this is a Duet 0.6 or a Duet 0.8.5 board.
 		// If it is a 0.85 board then DAC0 (AKA digital pin 67) is connected to ground via a diode and a 2.15K resistor.
 		// So we enable the pullup (value 150K-150K) on pin 67 and read it, expecting a LOW on a 0.8.5 board and a HIGH on a 0.6 board.
@@ -2473,6 +2478,7 @@ void Platform::SetBoardType(BoardType bt)
 		pinMode(Dac0DigitalPin, INPUT_PULLUP);
 		board = (digitalRead(Dac0DigitalPin)) ? BoardType::Duet_06 : BoardType::Duet_085;
 		pinMode(Dac0DigitalPin, INPUT);	// turn pullup off
+# endif
 #endif
 	}
 	else
@@ -2499,9 +2505,13 @@ const char* Platform::GetElectronicsString() const
 	case BoardType::DuetNG_10:				return "DuetNG 1.0";
 # endif
 #else
+# ifdef __RADDS__
+	case BoardType::RADDS_15:				return "RADDS 1.5";
+# else
 	case BoardType::Duet_06:				return "Duet 0.6";
 	case BoardType::Duet_07:				return "Duet 0.7";
 	case BoardType::Duet_085:				return "Duet 0.85";
+# endif
 #endif
 	default:								return "Unidentified";
 	}
