@@ -4,7 +4,7 @@
 #define NAME "RepRapFirmware for Duet"
 
 const size_t NumFirmwareUpdateModules = 1;
-#define IAP_UPDATE_FILE "iap.bin"
+#define IAP_UPDATE_FILE "iapradds.bin"
 #define IAP_FIRMWARE_FILE "RepRapFirmware.bin"
 
 // Default board type
