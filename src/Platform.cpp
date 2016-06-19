@@ -36,6 +36,13 @@
 extern char _end;
 extern "C" char *sbrk(int i);
 
+#ifdef DUET_NG
+const uint16_t driverPowerOnAdcReading = (uint16_t)(4096 * 10.0/PowerFailVoltageRange);			// minimum voltage at which we initialise the drivers
+const uint16_t driverPowerOffAdcReading = (uint16_t)(4096 * 9.5/PowerFailVoltageRange);			// voltages below this flag the drivers as unusable
+const uint16_t driverOverVoltageAdcReading = (uint16_t)(4096 * 29.0/PowerFailVoltageRange);		// voltages above this cause driver shutdown
+const uint16_t driverNormalVoltageAdcReading = (uint16_t)(4096 * 25.5/PowerFailVoltageRange);	// voltages at or below this are normal
+#endif
+
 const uint8_t memPattern = 0xA5;
 
 static uint32_t fanInterruptCount = 0;				// accessed only in ISR, so no need to declare it volatile
@@ -299,6 +306,7 @@ void Platform::Init()
 	}
 
 #ifdef EXTERNAL_DRIVERS
+	driversPowered = false;
 	ExternalDrivers::Init();
 #endif
 
@@ -356,6 +364,21 @@ void Platform::Init()
 		pinMode(inkjetClear, OUTPUT);
 		digitalWrite(inkjetClear, HIGH);
 	}
+#endif
+
+	// MCU temperature and power monitoring
+	temperatureAdcChannel = GetTemperatureAdcChannel();
+	AnalogInEnableChannel(temperatureAdcChannel, true);
+	currentMcuTemperature = highestMcuTemperature = 0;
+	lowestMcuTemperature = 4095;
+	mcuTemperatureAdjust = 0.0;
+	mcuAlarmTemperature = 80.0;			// need to set the quite high here because the sensor is not be calibrated yet
+
+#ifdef DUET_NG
+	vInMonitorAdcChannel = PinToAdcChannel(PowerMonitorVinDetectPin);
+	AnalogInEnableChannel(vInMonitorAdcChannel, true);
+	currentVin = highestVin = 0;
+	lowestVin = 4095;
 #endif
 
 	// Clear the spare pin configuration
@@ -1117,7 +1140,7 @@ void Platform::Spin()
 		return;
 
 	// Check if any files are supposed to be closed
-	for(size_t i = 0; i < MAX_FILES; i++)
+	for (size_t i = 0; i < MAX_FILES; i++)
 	{
 		if (files[i]->closeRequested)
 		{
@@ -1135,11 +1158,38 @@ void Platform::Spin()
 		fans[fan].Check();
 	}
 
+	// Read the MCU temperature.
+	currentMcuTemperature = AnalogInReadChannel(temperatureAdcChannel);
+	if (currentMcuTemperature > highestMcuTemperature)
+	{
+		highestMcuTemperature= currentMcuTemperature;
+	}
+	if (currentMcuTemperature < lowestMcuTemperature)
+	{
+		lowestMcuTemperature = currentMcuTemperature;
+	}
+
 	// Diagnostics test
 	if (debugCode == (int)DiagnosticTestType::TestSpinLockup)
 	{
 		for (;;) {}
 	}
+
+#ifdef DUET_NG
+	// Check whether the TMC drivers need to be initialised
+	if (driversPowered)
+	{
+		if (currentVin < driverPowerOffAdcReading || currentVin > driverOverVoltageAdcReading)
+		{
+			driversPowered = false;
+		}
+	}
+	else if (currentVin >= driverPowerOnAdcReading && currentVin <= driverNormalVoltageAdcReading)
+	{
+		driversPowered = true;
+	}
+	ExternalDrivers::SetDriversPowered(driversPowered);
+#endif
 
 	ClassReport(longWait);
 }
@@ -1343,6 +1393,15 @@ void Platform::Diagnostics(MessageType mtype)
 
 	// Show the longest SD card write time
 	MessageF(mtype, "SD card longest block write time: %.1fms\n", FileStore::GetAndClearLongestWriteTime());
+
+	// Show the MCU temperatures
+	MessageF(mtype, "MCU temperature: min %.1f, current %.1f, max %.1f\n",
+				AdcReadingToCpuTemperature(lowestMcuTemperature), AdcReadingToCpuTemperature(currentMcuTemperature), AdcReadingToCpuTemperature(highestMcuTemperature));
+#ifdef DUET_NG
+	// Show the supply voltage
+	MessageF(mtype, "Supply voltage: min %.1f, current %.1f, max %.1f\n",
+				AdcReadingToPowerVoltage(lowestVin), AdcReadingToPowerVoltage(currentVin), AdcReadingToPowerVoltage(highestVin));
+#endif
 
 // Debug
 //MessageF(mtype, "TC_FMR = %08x, PWM_FPE = %08x, PWM_FSR = %08x\n", TC2->TC_FMR, PWM->PWM_FPE, PWM->PWM_FSR);
@@ -1942,12 +2001,12 @@ int Platform::GetPhysicalDrive(size_t driverNumber) const
 // Get current cooling fan speed on a scale between 0 and 1
 float Platform::GetFanValue(size_t fan) const
 {
-	return (fan < NUM_FANS) ? fans[fan].val : -1;
+	return (fan < NUM_FANS) ? fans[fan].GetValue() : -1;
 }
 
 bool Platform::GetCoolingInverted(size_t fan) const
 {
-	return (fan < NUM_FANS) ? fans[fan].inverted : -1;
+	return (fan < NUM_FANS) ? fans[fan].GetInverted() : -1;
 
 }
 
@@ -1955,7 +2014,7 @@ void Platform::SetCoolingInverted(size_t fan, bool inv)
 {
 	if (fan < NUM_FANS)
 	{
-		fans[fan].inverted = inv;
+		fans[fan].SetInverted(inv);
 	}
 }
 
@@ -2017,7 +2076,7 @@ float Platform::GetFanPwmFrequency(size_t fan) const
 {
 	if (fan < NUM_FANS)
 	{
-		return (float)fans[fan].freq;
+		return (float)fans[fan].GetPwmFrequency();
 	}
 	return 0.0;
 }
@@ -2034,7 +2093,7 @@ float Platform::GetTriggerTemperature(size_t fan) const
 {
 	if (fan < NUM_FANS)
 	{
-		return fans[fan].triggerTemperature;
+		return fans[fan].GetTriggerTemperature();
 	}
 	return ABS_ZERO;
 
@@ -2052,7 +2111,7 @@ uint16_t Platform::GetHeatersMonitored(size_t fan) const
 {
 	if (fan < NUM_FANS)
 	{
-		return fans[fan].heatersMonitored;
+		return fans[fan].GetHeatersMonitored();
 	}
 	return 0;
 }
@@ -2079,22 +2138,25 @@ void Platform::Fan::Init(Pin p_pin, bool hwInverted)
 
 void Platform::Fan::SetValue(float speed)
 {
-	if (heatersMonitored == 0)
+	if (speed > 1.0)
 	{
-		if (speed > 1.0)
-		{
-			speed /= 255.0;
-		}
-		val = constrain<float>(speed, 0.0, 1.0);
-		Refresh();
+		speed /= 255.0;
 	}
+	val = constrain<float>(speed, 0.0, 1.0);
+	Refresh();
 }
 
-void Platform::Fan::Refresh()
+void Platform::Fan::SetInverted(bool inv)
+{
+	inverted = inv;
+	Refresh();
+}
+
+void Platform::Fan::SetHardwarePwm(float pwmVal)
 {
 	if (pin >= 0)
 	{
-		uint32_t p = (uint32_t)(255.0 * val);
+		uint32_t p = (uint32_t)(255.0 * pwmVal);
 		bool invert = hardwareInverted;
 		if (inverted)
 		{
@@ -2110,13 +2172,31 @@ void Platform::Fan::SetPwmFrequency(float p_freq)
 	Refresh();
 }
 
+void Platform::Fan::SetHeatersMonitored(uint16_t h)
+{
+	heatersMonitored = h;
+	Refresh();
+}
+
+void Platform::Fan::Refresh()
+{
+	if (heatersMonitored != 0)
+	{
+		const float pwmVal = (reprap.GetPlatform()->AnyHeaterHot(heatersMonitored, triggerTemperature))
+				? max<float>(0.5, val)			// make sure that thermostatic fans always run at 50% speed or more
+				: 0.0;
+		SetHardwarePwm(pwmVal);
+	}
+	else
+	{
+		SetHardwarePwm(val);
+	}
+}
+
 void Platform::Fan::Check()
 {
 	if (heatersMonitored != 0)
 	{
-		val = (reprap.GetPlatform()->AnyHeaterHot(heatersMonitored, triggerTemperature))
-				? max<float>(0.5, val)			// make sure that thermostatic fans always run at 50% speed or more
-				: 0.0;
 		Refresh();
 	}
 }
@@ -2463,10 +2543,12 @@ void Platform::SetBoardType(BoardType bt)
 	{
 #ifdef DUET_NG
 # ifdef PROTOTYPE_1
-		board = BoardType::DuetNG_06;
+		board = BoardType::DuetWiFi_06;
 # else
-		board = BoardType::DuetNG_10;
+		board = BoardType::DuetWiFi_10;
 # endif
+#elif defined(__RADDS__)
+		board = BoardType::RADDS_15;
 #else
 # ifdef __RADDS__
 		board = BoardType::RADDS_15;
@@ -2500,10 +2582,12 @@ const char* Platform::GetElectronicsString() const
 	{
 #ifdef DUET_NG
 # ifdef PROTOTYPE_1
-	case BoardType::DuetNG_06:				return "DuetNG 0.6";
+	case BoardType::DuetWiFi_06:			return "Duet WiFi 0.6";
 # else
-	case BoardType::DuetNG_10:				return "DuetNG 1.0";
+	case BoardType::DuetWiFi_10:			return "Duet WiFi 1.0";
 # endif
+#elif defined(__RADDS__)
+	case BoardType::RADDS_15:				return "RADDS 1.5";
 #else
 # ifdef __RADDS__
 	case BoardType::RADDS_15:				return "RADDS 1.5";
@@ -2634,6 +2718,25 @@ char Platform::ReadFromSource(const SerialSource source)
 	return 0;
 }
 
+// CPU temperature
+void Platform::GetMcuTemperatures(float& minT, float& currT, float& maxT) const
+{
+	minT = AdcReadingToCpuTemperature(lowestMcuTemperature);
+	currT = AdcReadingToCpuTemperature(currentMcuTemperature);
+	maxT = AdcReadingToCpuTemperature(highestMcuTemperature);
+}
+
+#ifdef DUET_NG
+// Power in voltage
+void Platform::GetPowerVoltages(float& minV, float& currV, float& maxV) const
+{
+	minV = AdcReadingToPowerVoltage(lowestVin);
+	currV = AdcReadingToPowerVoltage(currentVin);
+	maxV = AdcReadingToPowerVoltage(highestVin);
+}
+#endif
+
+
 // Pragma pop_options is not supported on this platform, so we put this time-critical code right at the end of the file
 //#pragma GCC push_options
 #pragma GCC optimize ("O3")
@@ -2692,6 +2795,27 @@ void Platform::Tick()
 #ifdef TIME_TICK_ISR
 	uint32_t now = micros();
 #endif
+
+#ifdef DUET_NG
+	// Read the power input voltage
+	currentVin = AnalogInReadChannel(vInMonitorAdcChannel);
+	if (currentVin > highestVin)
+	{
+		highestVin = currentVin;
+	}
+	if (currentVin < lowestVin)
+	{
+		lowestVin = currentVin;
+	}
+	if (driversPowered && currentVin > driverOverVoltageAdcReading)
+	{
+		driversPowered = false;
+		ExternalDrivers::SetDriversPowered(false);
+		//TODO set ENN high on production boards
+	}
+
+	#endif
+
 	switch (tickState)
 	{
 	case 1:			// last conversion started was a thermistor
