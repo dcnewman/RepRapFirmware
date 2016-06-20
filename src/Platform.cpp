@@ -367,8 +367,10 @@ void Platform::Init()
 #endif
 
 	// MCU temperature and power monitoring
+#ifndef __RADDS__
 	temperatureAdcChannel = GetTemperatureAdcChannel();
 	AnalogInEnableChannel(temperatureAdcChannel, true);
+#endif
 	currentMcuTemperature = highestMcuTemperature = 0;
 	lowestMcuTemperature = 4095;
 	mcuTemperatureAdjust = 0.0;
