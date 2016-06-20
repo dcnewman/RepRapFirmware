@@ -1158,6 +1158,7 @@ void Platform::Spin()
 		fans[fan].Check();
 	}
 
+#ifndef __RADDS__
 	// Read the MCU temperature.
 	currentMcuTemperature = AnalogInReadChannel(temperatureAdcChannel);
 	if (currentMcuTemperature > highestMcuTemperature)
@@ -1168,6 +1169,7 @@ void Platform::Spin()
 	{
 		lowestMcuTemperature = currentMcuTemperature;
 	}
+#endif
 
 	// Diagnostics test
 	if (debugCode == (int)DiagnosticTestType::TestSpinLockup)
@@ -1397,6 +1399,7 @@ void Platform::Diagnostics(MessageType mtype)
 	// Show the MCU temperatures
 	MessageF(mtype, "MCU temperature: min %.1f, current %.1f, max %.1f\n",
 				AdcReadingToCpuTemperature(lowestMcuTemperature), AdcReadingToCpuTemperature(currentMcuTemperature), AdcReadingToCpuTemperature(highestMcuTemperature));
+
 #ifdef DUET_NG
 	// Show the supply voltage
 	MessageF(mtype, "Supply voltage: min %.1f, current %.1f, max %.1f\n",
