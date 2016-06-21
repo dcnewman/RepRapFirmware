@@ -1160,9 +1160,12 @@ void Platform::Spin()
 		fans[fan].Check();
 	}
 
-#ifndef __RADDS__
 	// Read the MCU temperature.
+#ifndef __RADDS__
 	currentMcuTemperature = AnalogInReadChannel(temperatureAdcChannel);
+#else
+	currentMcuTemperature = 0;
+#endif
 	if (currentMcuTemperature > highestMcuTemperature)
 	{
 		highestMcuTemperature= currentMcuTemperature;
@@ -1171,7 +1174,6 @@ void Platform::Spin()
 	{
 		lowestMcuTemperature = currentMcuTemperature;
 	}
-#endif
 
 	// Diagnostics test
 	if (debugCode == (int)DiagnosticTestType::TestSpinLockup)
