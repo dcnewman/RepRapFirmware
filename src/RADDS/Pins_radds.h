@@ -91,10 +91,14 @@ const float STEPPER_DAC_VOLTAGE_OFFSET = -0.025;			// Stepper motor current offs
 const bool HEAT_ON = true;
 
 // Analogue pin numbers
-const Pin TEMP_SENSE_PINS[HEATERS] = { 4, 0, 1, 2 };
+const Pin TEMP_SENSE_PINS[HEATERS] = HEATERS_(4, 0, 1, 2, e, f, g);
 
-//pin D38 is PWM capable but not an Arduino PWM pin
-const Pin HEAT_ON_PINS[HEATERS] = { 7, 13, 12, 11 }; // bed, h0, h1, h2
+// Heater outputs
+// Bed PMW: D7 has hardware PWM so bed has PWM
+// h0, h1 PMW: D13 & D12 are on TIOB0 & B8 which are both TC B channels, so they get PWM
+// h2 bang-bang: D11 is on TIOA8 which is a TC A channel shared with h1, it gets bang-bang control
+
+const Pin HEAT_ON_PINS[HEATERS] = HEATERS_(7, 13, 12, 11, e, f, g); // bed, h0, h1, h2
 
 // Default thermistor betas
 const float BED_R25 = 10000.0;
