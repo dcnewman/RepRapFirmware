@@ -81,7 +81,7 @@ const Pin END_STOP_PINS[DRIVES] = { 28, 30, 32, 39, -1, -1, -1, -1 };
 const uint8_t POT_WIPES[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 const float SENSE_RESISTOR = 0.1;	// Stepper motor current sense resistor
 const float MAX_STEPPER_DIGIPOT_VOLTAGE = (3.3 * 2.5 / (2.7 + 2.5));	// Stepper motor current reference voltage
-const float STEPPER_DAC_VOLTAGE_RANGE = 2.02;			       	// Stepper motor current reference voltage for E1 if using a DAC
+const float STEPPER_DAC_VOLTAGE_RANGE = 2.02;			       	// Stepper motor current reference voltage for E1 if using a DAC`
 const float STEPPER_DAC_VOLTAGE_OFFSET = -0.025;			// Stepper motor current offset voltage for E1 if using a DAC
 
 // HEATERS - The bed is assumed to be the at index 0
@@ -92,9 +92,6 @@ const bool HEAT_ON = true;
 
 // Analogue pin numbers
 const Pin TEMP_SENSE_PINS[HEATERS] = { 4, 0, 1, 2 };
-
-// 0 for inverted heater (e.g. Duet v0.6)
-// 1 for not (e.g. Duet v0.4; RADDS)
 
 //pin D38 is PWM capable but not an Arduino PWM pin
 const Pin HEAT_ON_PINS[HEATERS] = { 7, 13, 12, 11 }; // bed, h0, h1, h2
