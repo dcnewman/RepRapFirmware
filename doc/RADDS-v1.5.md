@@ -30,6 +30,33 @@ executable within it.
    button, and then issue the above `bossac` command but with `-U true`
    instead of `-U false`.
 
+
+Firmware update via SD card
+---------------------------
+
+Once release 1.13 or later is installed, subsequent upgrades can be
+accomplised as follows.
+
+1. Place the [`iapradds.bin`](https://github.com/dcnewman/DuetIAP/blob/master/Release/iapradds.bin)
+   file into the SD card's `sys/` directory.  This only needs to be done once.
+2. To the SD card's `sys/` directory, place a copy of the new firmware
+   `.bin` file you wish to upgrade to.  It must be named 
+   `RepRapFirmware.bin`.  The name is case-sensitive.
+3. Place the SD card back into the RADDS board and power it on.
+4. Over the native USB port, issue the command `M997 S0`.  There will be
+   a brief pause after which you will be told that the board is installing
+   the new firmware with a message similar to
+
+	Heat class exited.  
+	Move class exited.  
+	Move class exited.  
+	Updating main firmware
+
+   After about a minute, you can disconnect the USB and reconnect.  The new firmware
+  will be installed and the `RepRapFirmware.bin` file will have been deleted from
+  the SD card.
+
+
 SD Card Files
 -------------
 
@@ -61,7 +88,23 @@ to these guides:
 * **Normal Cartesian:** [Configuring RepRapFirmware for a Cartesian printer](http://reprap.org/wiki/Configuring_RepRapFirmware_for_a_Cartesian_printer)
 
 
-   
+Heaters
+-------
+
+Prior to release 1.13-dc42, RepRapFirmware on RADDS used bang-bang control of
+the three extruder heater outputs labelled `h0`, `h1`, and `h2` on the
+underside of the RADDS board.  Unfortunately, those outputs were not
+PWM-capable pins.  (The bed heater output and fan outputs are on
+PWM-capable pins.)
+
+As of RepRapFirmware 1.13-dc42, RepRapFirmware on RADDS supports PWM
+control for heater outputs `h0` and `h1` using the underlying timer
+counter (TC) control for those pins.  However, `h2` remains as
+bang-bang style since it uses the same timer counter as `h1` and
+there presently is no code support to support different PWM duty cycles
+for two pins sharing the same timer counter.
+
+
 Stepper Drivers
 ---------------
 
