@@ -24,7 +24,8 @@ const size_t DRIVES = 8;
 // values in arrays of size DRIVES.  E.g.,
 //
 // max_fee_rates[DRIVES] = {DRIVES_(1, 1, 1, 1, 1, 1, 1, 1, 1)}
-#define DRIVES_(a,b,c,d,e,f,g,h,i) { a,b,c,d,e,f,g,h }
+#define DRIVES_(a,b,c,d,e,f,g,h,i,j) { a,b,c,d,e,f,g,h }
+const size_t MaxDriversPerAxis = 4;				// The maximum number of stepper drivers assigned to one axis
 
 // If enabled, the following control the use of the optional ExternalDrivers module
 //#define EXTERNAL_DRIVERS		(1)
@@ -38,7 +39,7 @@ const int8_t HEATERS = 4;
 // values in arrays of size HEATERS.  E.g.,
 //
 // defaultPidKis[HEATERS] = {HEATERS_(5.0, 0.1, 0.1, 0.1, 0.1, 0.1)};
-#define HEATERS_(a,b,c,d,e,f,g) { a,b,c,d }
+#define HEATERS_(a,b,c,d,e,f,g,h) { a,b,c,d }
 
 // The number of movement axes in the machine, usually just X, Y and Z.
 // <= DRIVE
@@ -54,6 +55,7 @@ const size_t NUM_SERIAL_CHANNELS = 2;
 //                                    X   Y   Z  E1  E2  E3  E4  E5
 const Pin ENABLE_PINS[DRIVES] =    { 26, 22, 15, 62, 65, 49, 37, 31 };
 const bool ENABLE_VALUES[DRIVES] = {  false, false, false, false, false, false, false, false };
+//                                  A15 D04 B25 A02 B19 C12 C03 D06
 const Pin STEP_PINS[DRIVES] =      { 24, 17,  2, 61, 64, 51, 35, 29 };
 const Pin DIRECTION_PINS[DRIVES] = { 23, 16,  3, 60, 63, 53, 33, 27 };
 
@@ -91,14 +93,14 @@ const float STEPPER_DAC_VOLTAGE_OFFSET = -0.025;			// Stepper motor current offs
 const bool HEAT_ON = true;
 
 // Analogue pin numbers
-const Pin TEMP_SENSE_PINS[HEATERS] = HEATERS_(4, 0, 1, 2, e, f, g);
+const Pin TEMP_SENSE_PINS[HEATERS] = HEATERS_(4, 0, 1, 2, e, f, g, h);
 
 // Heater outputs
 // Bed PMW: D7 has hardware PWM so bed has PWM
 // h0, h1 PMW: D13 & D12 are on TIOB0 & B8 which are both TC B channels, so they get PWM
 // h2 bang-bang: D11 is on TIOA8 which is a TC A channel shared with h1, it gets bang-bang control
 
-const Pin HEAT_ON_PINS[HEATERS] = HEATERS_(7, 13, 12, 11, e, f, g); // bed, h0, h1, h2
+const Pin HEAT_ON_PINS[HEATERS] = HEATERS_(7, 13, 12, 11, e, f, g, h); // bed, h0, h1, h2
 
 // Default thermistor betas
 const float BED_R25 = 10000.0;

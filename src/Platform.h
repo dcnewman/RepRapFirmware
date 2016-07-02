@@ -1353,7 +1353,12 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 //	The PC and PD bit numbers don't overlap, so we use their actual positions.
 //	PA0 clashes with PD0, so we use bit 1 to represent PA0.
 // RADDS:
-//	To be done
+//                    <<15   12   25    2   19   12    3    6
+//      Step pins are PA15 PA12 PB25 PA02 PB19 PC12 PC03 PD06
+//           Duet Pins  24,  17,   2,  61,  64,  51,  35,  29
+//
+//      Overlap with PA12 and PC12.  Just shift PC pins left by 1
+//      and there's no clash.
 
 // Calculate the step bit for a driver. This doesn't need to be fast.
 /*static*/ inline uint32_t Platform::CalcDriverBitmap(size_t driver)
@@ -1362,7 +1367,7 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 #if defined(DUET_NG)
 	return pinDesc.ulPin;
 #elif defined(__RADDS__)
-# error needs writing
+	return (pinDesc.pPort == PIOC) ? pinDesc.ulPin << 1 : pinDesc.ulPin;
 #else
 	return (pinDesc.pPort == PIOA) ? pinDesc.ulPin << 1 : pinDesc.ulPin;
 #endif
@@ -1376,7 +1381,10 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 #if defined(DUET_NG)
 	PIOD->PIO_ODSR = driverMap;				// on Duet WiFi all step pins are on port D
 #elif defined(__RADDS__)
-# error need to write this
+	PIOA->PIO_ODSR = driverMap;
+	PIOB->PIO_ODSR = driverMap;
+	PIOD->PIO_ODSR = driverMap;
+	PIOC->PIO_ODSR = driverMap >> 1;		// do this last, it means the processor doesn't need to preserve the register containing driverMap
 #else	// Duet
 	PIOD->PIO_ODSR = driverMap;
 	PIOC->PIO_ODSR = driverMap;
@@ -1392,7 +1400,10 @@ inline float Platform::AdcReadingToPowerVoltage(uint16_t adcVal)
 #if defined(DUET_NG)
 	PIOD->PIO_ODSR = 0;						// on Duet WiFi all step pins are on port D
 #elif defined(__RADDS__)
-# error need to write this
+	PIOD->PIO_ODSR = 0;
+	PIOC->PIO_ODSR = 0;
+	PIOB->PIO_ODSR = 0;
+	PIOA->PIO_ODSR = 0;
 #else	// Duet
 	PIOD->PIO_ODSR = 0;
 	PIOC->PIO_ODSR = 0;
