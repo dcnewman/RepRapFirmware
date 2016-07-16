@@ -183,6 +183,11 @@ env.Replace(CCFLAGS=[
     '-DPLATFORM=' + platform_dir,
     '-DDATE=\'"' + datetime.now().strftime('%y/%m/%d') + '"\'' ])
 
+if platform == 'ng':
+  env.Append(CCFLAGS = [
+    '-mfpu=fpv4-sp-d16',
+    '-mfloat-abi=softfp' ] )
+
 if flags != []:
   env.Append(CCFLAGS=flags)
 
